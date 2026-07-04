@@ -70,7 +70,7 @@ export default function InstructorRequestForm() {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${baseUrl}/instructor`, {
+      const res = await fetch(`${baseUrl}/instructors/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

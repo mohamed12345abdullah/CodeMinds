@@ -51,7 +51,7 @@ export default function InstructorsRequests() {
 
   const handleAccept = async (instructorId: string, profileRefId: string) => {
     try {
-      const response = await fetch(`https://code-minds-website.vercel.app/api/instructor/${profileRefId}/status`, {
+      const response = await fetch(`https://code-minds-website.vercel.app/api/instructors/${profileRefId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
