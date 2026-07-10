@@ -170,7 +170,7 @@ const GroupForm = () => {
 
   const fetchInstructors = async () => {
     try {
-      const res = await fetch(`${baseUrl}/instructor`, {
+      const res = await fetch(`${baseUrl}/instructors/accepted`, {
         method: "GET",
         headers: {
 
