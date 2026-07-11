@@ -66,6 +66,13 @@ export default function DashboardPage() {
             icon: <FiPlusCircle />,
             path: '/dashboard/add-student',
             color: '#8BC34A'
+        },
+        {
+            title: "statistics",
+            description: "show statistics",
+            icon: <FiPlusCircle />,
+            path: '/dashboard/statistics',
+            color: '#8BC34A'
         }
     ];
 
