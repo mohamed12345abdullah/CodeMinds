@@ -118,28 +118,78 @@ function getStudentCourseCount(user: User): number {
   return 0;
 }
 
+interface DeleteTarget {
+  id: string;
+  name: string;
+  role: string;
+}
+
+function ConfirmModal({
+  target,
+  onConfirm,
+  onCancel,
+  deleting,
+}: {
+  target: DeleteTarget;
+  onConfirm: () => void;
+  onCancel: () => void;
+  deleting: boolean;
+}) {
+  return (
+    <div className={styles.modalOverlay} onClick={onCancel}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalIcon}>🗑️</div>
+        <h2 className={styles.modalTitle}>Delete User?</h2>
+        <p className={styles.modalBody}>
+          You're about to permanently delete{" "}
+          <span className={styles.modalName}>{target.name}</span>{" "}
+          <span
+            className={styles.modalRole}
+            style={{ "--badge-color": getRoleColor(target.role) } as React.CSSProperties}
+          >
+            {target.role}
+          </span>
+          . This action cannot be undone.
+        </p>
+        <div className={styles.modalActions}>
+          <button className={styles.cancelBtn} onClick={onCancel} disabled={deleting}>
+            Cancel
+          </button>
+          <button className={styles.confirmBtn} onClick={onConfirm} disabled={deleting}>
+            {deleting ? <span className={styles.btnSpinner} /> : null}
+            {deleting ? "Deleting…" : "Yes, Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function StatisticsPage() {
   const [activeRole, setActiveRole] = useState<Role>("all");
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [stats, setStats] = useState<Stats>({
     total: 0, students: 0, instructors: 0, managers: 0, admins: 0, users: 0,
     googleSignups: 0, duplicatePhones: 0,
   });
 
-  const baseUrl = "https://code-minds-website.vercel.app/api/users";
+//   const baseUrl = "http://localhost:4000/api/users";
+  const baseUrl = "https://code-minds-website.vercel.app/";
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
-
         const endpoint =
           activeRole === "all"
-            ? `${baseUrl}/all`
-            : `${baseUrl}/${activeRole}`;
+            ? `${baseUrl}api/users/all`
+            : `${baseUrl}api/users/${activeRole}`;
         const res = await fetch(endpoint);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -147,23 +197,7 @@ export default function StatisticsPage() {
         setUsers(list);
 
         // Compute stats from "all" only when viewing all
-        if (activeRole === "all") {
-          const phoneCounts: Record<string, number> = {};
-          list.forEach((u) => {
-            if (u.phone) phoneCounts[u.phone] = (phoneCounts[u.phone] ?? 0) + 1;
-          });
-          const dupPhones = Object.values(phoneCounts).filter((c) => c > 1).length;
-          setStats({
-            total: list.length,
-            students: list.filter((u) => u.role === "student").length,
-            instructors: list.filter((u) => u.role === "instructor").length,
-            managers: list.filter((u) => u.role === "manager").length,
-            admins: list.filter((u) => u.role === "admin").length,
-            users: list.filter((u) => u.role === "user").length,
-            googleSignups: list.filter((u) => !!u.googleId).length,
-            duplicatePhones: dupPhones,
-          });
-        }
+        if (activeRole === "all") recalcStats(list);
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : "Failed to fetch");
       } finally {
@@ -172,6 +206,49 @@ export default function StatisticsPage() {
     };
     fetchData();
   }, [activeRole]);
+
+  const recalcStats = (list: User[]) => {
+    const phoneCounts: Record<string, number> = {};
+    list.forEach((u) => {
+      if (u.phone) phoneCounts[u.phone] = (phoneCounts[u.phone] ?? 0) + 1;
+    });
+    const dupPhones = Object.values(phoneCounts).filter((c) => c > 1).length;
+    setStats({
+      total: list.length,
+      students: list.filter((u) => u.role === "student").length,
+      instructors: list.filter((u) => u.role === "instructor").length,
+      managers: list.filter((u) => u.role === "manager").length,
+      admins: list.filter((u) => u.role === "admin").length,
+      users: list.filter((u) => u.role === "user").length,
+      googleSignups: list.filter((u) => !!u.googleId).length,
+      duplicatePhones: dupPhones,
+    });
+  };
+
+  const showToast = (msg: string, ok: boolean) => {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`${baseUrl}api/users/${deleteTarget.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const updated = users.filter((u) => u._id !== deleteTarget.id);
+      setUsers(updated);
+      if (activeRole === "all") recalcStats(updated);
+      showToast(`"${deleteTarget.name}" deleted successfully.`, true);
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : "Delete failed.", false);
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
 
   const filtered = users.filter((u) => {
     if (!search) return true;
@@ -194,6 +271,22 @@ export default function StatisticsPage() {
 
   return (
     <div className={styles.page}>
+      {/* Toast */}
+      {toast && (
+        <div className={`${styles.toast} ${toast.ok ? styles.toastOk : styles.toastErr}`}>
+          {toast.ok ? "✓" : "✕"} {toast.msg}
+        </div>
+      )}
+
+      {/* Delete Confirm Modal */}
+      {deleteTarget && (
+        <ConfirmModal
+          target={deleteTarget}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteTarget(null)}
+          deleting={deleting}
+        />
+      )}
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
@@ -287,6 +380,7 @@ export default function StatisticsPage() {
                 {activeRole === "student" ? <th>Courses</th> : null}
                 <th>Joined</th>
                 <th>Auth</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -349,6 +443,15 @@ export default function StatisticsPage() {
                       ) : (
                         <span className={styles.phoneBadge}>Phone</span>
                       )}
+                    </td>
+                    <td>
+                      <button
+                        className={styles.deleteBtn}
+                        onClick={() => setDeleteTarget({ id: user._id, name: user.name, role: user.role })}
+                        title="Delete user"
+                      >
+                        🗑️
+                      </button>
                     </td>
                   </tr>
                 );
