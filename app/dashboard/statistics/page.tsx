@@ -179,7 +179,7 @@ export default function StatisticsPage() {
     googleSignups: 0, duplicatePhones: 0,
   });
 
-//   const baseUrl = "http://localhost:4000/api/users";
+  // const baseUrl = "http://localhost:4000/";
   const baseUrl = "https://code-minds-website.vercel.app/";
   useEffect(() => {
     const fetchData = async () => {
