@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FiBook, FiLayers, FiActivity, FiArrowRight, FiMonitor } from 'react-icons/fi';
 import NavbarPage from "../components/Navbar";
+import { group } from "console";
 
 const baseUrl = "https://code-minds-website.vercel.app/api";
 // const baseUrl = "http://localhost:4000/api";
@@ -136,13 +137,28 @@ export default function InstructorDashboard() {
                 <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#fff' }}>{stats.totalGroups > 0 ? "Active" : "Idle"}</div>
               </div>
             </div>
+
+
+                  <Link href={`../dashboard/add-student`}>
+
+                    <div className="stat-card">
+                            <FiActivity size={24} color="#f59e0b" />
+                            <div>
+                              <div style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>dashboard</div>
+                              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#fff' }}> add student</div>
+                            </div>
+                    </div>
+             
+                </Link>
           </section>
         )}
 
         {/* Groups Grid */}
+        
+  
+
         <section className="groups-section">
           <h2 className="groups-title">Your Groups</h2>
-          
           {loading ? (
             <div className="groups-grid">
               {[1, 2, 3].map(i => <div key={i} className="loading-card" />)}

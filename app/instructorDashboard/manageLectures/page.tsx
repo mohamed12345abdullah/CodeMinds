@@ -11,6 +11,7 @@ import {
 import NavbarPage from "../../components/Navbar";
 
 const baseUrl = "https://code-minds-website.vercel.app/api";
+// const baseUrl = "http://localhost:4000/api";
 
 interface Lecture {
   _id: string;
