@@ -73,7 +73,15 @@ export default function DashboardPage() {
             icon: <FiPlusCircle />,
             path: '/dashboard/statistics',
             color: '#8BC34A'
-        }
+        },
+        {
+            title: "purchases",
+            description: "show purchases",
+            icon: <FiPlusCircle />,
+            path: '/dashboard/purchase',
+            color: '#4aadc3ff'
+        },
+        
     ];
 
     return (
